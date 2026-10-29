@@ -75,12 +75,12 @@ class LibraryViewModel extends ChangeNotifier {
     return _findActiveLoan(bookId) != null;
   }
 
-  LoanStatus? getBookStatus(String bookId) {
+  LoanStatus? getBookStatus(String bookId, {DateTime? now}) {
     final activeLoan = _findActiveLoan(bookId);
     if (activeLoan == null) {
       return null;
     }
-    return getOverdueStatus(activeLoan);
+    return getOverdueStatus(activeLoan, now: now);
   }
 
   String getBookTitle(String bookId) {

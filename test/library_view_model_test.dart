@@ -9,26 +9,32 @@ import 'package:university_library_system_mvvm/viewmodels/library_view_model.dar
 
 class FakeBookRepository implements BookRepository {
   @override
-  Future<List<Book>> getBooks() async {
-    return [
-      const Book(id: 'b001', title: 'Buku 1', author: 'Penulis A', replacementPrice: 109000),
-      const Book(id: 'b002', title: 'Buku 2', author: 'Penulis B', replacementPrice: 109000),
-    ];
-  }
+  Future<List<Book>> getBooks() async => const [
+    Book(id: 'b001', title: 'Menu Sehari-hari & Akhir Pekan Volume 1', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b002', title: 'Menu Sehari-hari & Akhir Pekan Volume 2', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b003', title: 'Menu Sehari-hari & Akhir Pekan Volume 3', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b004', title: '53 Resep + Step by Step Cookies dan Camilan Renyah dari Dapur Sisca Soewitomo', author: 'Sisca Soewitomo', replacementPrice: 129000),
+    Book(id: 'b005', title: 'Simple & Easy Baking with Chef Flo', author: 'Chef Flo', replacementPrice: 145000),
+  ];
 }
 
 class FakeLoanRepository implements LoanRepository {
-  List<Loan> savedLoans = [];
-
   @override
   Future<List<Loan>> getLoans() async {
-    return List.of(savedLoans);
+    final today = DateTime.now();
+    return [
+      Loan(
+        id: 'l1',
+        bookId: 'b002',
+        studentId: 's1',
+        borrowDate: today,
+        dueDate: today.add(const Duration(days: 7)),
+      ),
+    ];
   }
 
   @override
-  Future<void> saveLoans(List<Loan> loans) async {
-    savedLoans = List.of(loans);
-  }
+  Future<void> saveLoans(List<Loan> loans) async {}
 }
 
 void main() {
@@ -151,7 +157,8 @@ void main() {
     });
 
     test('status buku di katalog', () {
-      expect(viewModel.getBookStatus('b001'), LoanStatus.active);
+      print(viewModel.loans.map((l) => '${l.id} ${l.bookId} return=${l.returnDate}').toList());
+      expect(viewModel.getBookStatus('b002', now: DateTime(2026, 8, 25)), LoanStatus.active);
       expect(viewModel.getBookStatus('b002'), null);
     });
   });

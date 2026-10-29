@@ -10,77 +10,79 @@ import 'package:university_library_system_mvvm/views/library_screen.dart';
 class FakeBookRepository implements BookRepository {
   @override
   Future<List<Book>> getBooks() async => const [
-    Book(id: 'b001', title: 'Dasar Flutter', author: 'A', replacementPrice: 100000),
-    Book(id: 'b002', title: 'Dart Lanjutan', author: 'B', replacementPrice: 80000),
+    Book(id: 'b001', title: 'Menu Sehari-hari & Akhir Pekan Volume 1', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b002', title: 'Menu Sehari-hari & Akhir Pekan Volume 2', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b003', title: 'Menu Sehari-hari & Akhir Pekan Volume 3', author: 'Yasa Boga', replacementPrice: 109000),
+    Book(id: 'b004', title: '53 Resep + Step by Step Cookies dan Camilan Renyah dari Dapur Sisca Soewitomo', author: 'Sisca Soewitomo', replacementPrice: 129000),
+    Book(id: 'b005', title: 'Simple & Easy Baking with Chef Flo', author: 'Chef Flo', replacementPrice: 145000),
   ];
 }
 
 class FakeLoanRepository implements LoanRepository {
   @override
-  Future<List<Loan>> getLoans() async => [
-    Loan(
-      id: 'l1',
-      bookId: 'b001',
-      studentId: 's1',
-      borrowDate: DateTime(2026, 10, 1),
-      dueDate: DateTime(2026, 10, 8),
-    ),
-  ];
+  Future<List<Loan>> getLoans() async {
+    final today = DateTime.now();
+    return [
+      Loan(
+        id: 'l1',
+        bookId: 'b002',
+        studentId: 's1',
+        borrowDate: today,
+        dueDate: today.add(const Duration(days: 7)),
+      ),
+    ];
+  }
 
   @override
   Future<void> saveLoans(List<Loan> loans) async {}
 }
 
+Future<LibraryViewModel> makeVm() async {
+  final vm = LibraryViewModel(
+    bookRepository: FakeBookRepository(),
+    loanRepository: FakeLoanRepository(),
+  );
+  await vm.loadData();
+  return vm;
+}
+
 void main() {
-  testWidgets('katalog menampilkan buku dan status pinjam', (tester) async {
-    final vm = LibraryViewModel(
-      bookRepository: FakeBookRepository(),
-      loanRepository: FakeLoanRepository(),
-    );
-    await vm.loadData();
+  testWidgets('buku yang sedang dipinjam menampilkan tombol Dipinjam', (tester) async {
+    final vm = await makeVm();
 
     await tester.pumpWidget(MaterialApp(
       home: LibraryScreen(viewModel: vm),
     ));
 
-    expect(find.text('Dasar Flutter'), findsOneWidget);
-    expect(find.text('Dart Lanjutan'), findsOneWidget);
-
+    // b002 sedang dipinjam, jadi tombolnya 'Dipinjam'
     expect(find.text('Dipinjam'), findsOneWidget);
-    expect(find.text('Borrow'), findsOneWidget);
+    expect(find.text('Menu Sehari-hari & Akhir Pekan Volume 2'), findsOneWidget);
   });
 
   testWidgets('menekan Borrow mengubah tombol dan UI ikut berubah', (tester) async {
-    final vm = LibraryViewModel(
-      bookRepository: FakeBookRepository(),
-      loanRepository: FakeLoanRepository(),
-    );
-    await vm.loadData();
+    final vm = await makeVm();
 
     await tester.pumpWidget(MaterialApp(
       home: LibraryScreen(viewModel: vm),
     ));
 
-    await tester.tap(find.text('Borrow'));
+    // b001 tersedia dan tampil paling atas
+    final borrowButton = find.widgetWithText(FilledButton, 'Borrow').first;
+    await tester.tap(borrowButton);
     await tester.pump();
 
-    expect(find.text('Borrow'), findsNothing);
+    expect(vm.isBookBorrowed('b001'), true);
     expect(find.text('Dipinjam'), findsNWidgets(2));
-    expect(vm.isBookBorrowed('b002'), true);
   });
 
   testWidgets('menampilkan pesan saat buku yang sama dipinjam lagi', (tester) async {
-    final vm = LibraryViewModel(
-      bookRepository: FakeBookRepository(),
-      loanRepository: FakeLoanRepository(),
-    );
-    await vm.loadData();
+    final vm = await makeVm();
 
     await tester.pumpWidget(MaterialApp(
       home: LibraryScreen(viewModel: vm),
     ));
 
-    final success = vm.borrowBook('b001', 's1');
+    final success = vm.borrowBook('b002', 's1');
     await tester.pump();
 
     expect(success, false);
